@@ -18,7 +18,7 @@ from experiment.utils import (
 from llm import get_token, get_call_count, set_model
 
 # 配置常量
-LOG_DIR = "log/{dataset}/{size}"
+LOG_DIR = "log/{dataset}/{size}"                   #用来创建储存日志文件的存储路径
 
 # 数据集配置
 # dataclass 提供一个简便的方式创建数据类, 默认实现__init__(),  __repr__(),  __eq__()方法.
@@ -29,7 +29,7 @@ class DatasetConfig:
     module_type: str
     scoring_function: str
     
-    def requires_context(self) -> bool:
+    def requires_context(self) -> bool:                    #来判断是否需要进行多跳
         return self.module_type == "multi-hop"
 
 # 数据集配置映射
@@ -62,7 +62,7 @@ class ExperimentRunner:
         if dataset not in DATASET_CONFIGS:
             raise ValueError(f"Unsupported dataset: {dataset}")
             
-        self.config = DATASET_CONFIGS[dataset]
+        self.config = DATASET_CONFIGS[dataset]             #根据给定的数据集名称，从预定义的配置字典中加载相应的配置信息
         set_model(model)
     
     async def gather_results(self, testset: List[Dict[str, Any]]) -> List[Any]:
@@ -72,12 +72,12 @@ class ExperimentRunner:
         question_key = self.config.question_key
         tasks = []
         
-        if self.config.requires_context():
+        if self.config.requires_context():                 #调用config里面写好的方法判断使用的数据集是否需要上下文信息
             from experiment.prompter.multihop import contexts
             # 处理question_key为列表的情况
             if isinstance(question_key, list):
                 formatted_questions = [self._format_question_from_keys(item, question_key) for item in testset]
-                tasks = [atom(question, contexts(item, self.dataset)) 
+                tasks = [atom(question, contexts(item, self.dataset))                                            #提供与当前问题相关的背景知识。
                          for question, item in zip(formatted_questions, testset)]
             else:
                 tasks = [atom(item[question_key], contexts(item, self.dataset)) for item in testset]
@@ -88,9 +88,10 @@ class ExperimentRunner:
             else:
                 tasks = [atom(item[question_key]) for item in testset]
 
-        return await tqdm.gather(*tasks, desc=f"Processing {self.dataset} tasks")
+        return await tqdm.gather(*tasks, desc=f"Processing {self.dataset} tasks")                         #显示进度条功能
     
-    def _format_question_from_keys(self, item: Dict[str, Any], keys: List[str]) -> str:
+    def _format_question_from_keys(self, item: Dict[str, Any], keys: List[str]) -> str:                   # 上下文信息： 有些任务需要将额外的上下文信息与问题一起提供给模型，以便模型更好地理解问题
+
         """当question_key是列表时，将多个键对应的值拼接成一个问题"""
         parts = []
         for key in keys:
@@ -98,7 +99,7 @@ class ExperimentRunner:
                 parts.append(f"{key}: {item[key]}")
         return "\n".join(parts)
     
-    def construct_entry(self, result: Tuple[Dict[str, Any], Any], data: Dict[str, Any]) -> Dict[str, Any]:
+    def construct_entry(self, result: Tuple[Dict[str, Any], Any], data: Dict[str, Any]) -> Dict[str, Any]:    # 将模型响应、原始数据和评分结果组合成一个结构化的结果条目
         """构建结果条目"""
         result_data, log = result
         question_key = self.config.question_key
@@ -121,9 +122,11 @@ class ExperimentRunner:
         }
         
         # 动态导入评分函数
-        scoring_function = getattr(__import__(f"experiment.utils", fromlist=[self.config.scoring_function]), 
+        scoring_function = getattr(__import__(f"experiment.utils", fromlist=[self.config.scoring_function]),    # 动态地从 experiment.utils 文件中导入一个评分函数。         __import__ 函数在 Python 中用于动态导入模块，它允许程序在运行时根据需要加载和使用模块
                                   self.config.scoring_function)
-        
+        # 对于数学问题（"score_math"），评分函数会比较模型生成的数值答案与真实答案的精确度。
+        # 对于多项选择题（"score_mc"），评分函数会比较模型选择的选项与真实选项是否匹配。
+        # 对于多跳问题（“score_mh”），会验证答案的跳跃性是否正确
         # 根据评分函数的不同传递不同数量的参数
         if self.config.scoring_function == "score_math":
             entry["score"] = scoring_function(entry["answer"], groundtruth, self.dataset)
@@ -232,7 +235,7 @@ async def main():
     """主函数"""
     parser = argparse.ArgumentParser(description='Run experiments on various datasets')
     parser.add_argument('--dataset', type=str, default='mmlu', 
-                        choices=list(DATASET_CONFIGS.keys()),
+                        choices=list(DATASET_CONFIGS.keys()),        #数据集的配置信息
                         help='Dataset to run experiment on')
     parser.add_argument('--start', type=int, default=0, 
                         help='Start index of the dataset')
@@ -245,7 +248,7 @@ async def main():
     
     args = parser.parse_args()
     
-    if args.mode == 'plugin':
+    if args.mode == 'plugin':          #为新的数据集生成一组更适合AoT模型的问题
         # 运行插件流程
         await optimize_dataset(
             dataset=args.dataset,

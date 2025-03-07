@@ -6,7 +6,7 @@ import httpx
 from apikey import url, api_key
 from functools import lru_cache
 
-transport = httpx.AsyncHTTPTransport(local_address="192.168.1.2")
+transport = httpx.AsyncHTTPTransport(local_address="192.168.1.2")   #可以本地"localhost"
 direct_client = httpx.AsyncClient(
     transport=transport,
     proxies=None,
@@ -32,7 +32,7 @@ def set_model(model):
     global model_name
     model_name = model
 
-async def gen(msg, model=None, temperature=None, response_format="json_object"):
+async def gen(msg, model=None, temperature=None, response_format="json_object"):              #使用 OpenAI 的聊天完成 API（client.chat.completions.create）来生成文本响应。由于网络请求可能出现各种问题，这段代码还包含了重试机制和错误处理
     global call_count, cost, current_prompt_tokens, current_completion_tokens, model_name
     if not model:
         model = model_name

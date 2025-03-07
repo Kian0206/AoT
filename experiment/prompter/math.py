@@ -6,7 +6,7 @@ def direct(question: str):
 
         QUESTION: {question}
         
-        Please extend your chain of thought as much as possible; the longer the chain of thought, the better.
+        Please extend your chain of thought as much as possible; the longer the chain of thought, the better.Dialectical Thinking
         
         You can freely reason in your response, but please enclose the final answer within <answer></answer> tags (pure number without units and explanations)
     """
@@ -15,7 +15,7 @@ def direct(question: str):
 
 def multistep(question: str):
     instruction = """
-        You are a precise math problem solver. Solve the given math problem step by step:
+        You are a precise math problem solver. Solve the given math problem step by step Dialectical Thinking:
 
         QUESTION: {question}
         

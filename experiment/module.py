@@ -114,7 +114,7 @@ async def merging(question: str, decompose_result: dict, independent_subqs: list
         if module == "multi-hop"
         else (question, decompose_result, independent_subqs, dependent_subqs)
     )
-    contractd_result = await contract(*contract_args)           # 合同步骤结果
+    contractd_result = await contract(*contract_args)           # 合同步骤结果  主要遇到调用注释装饰器的方法都是与openai做交互的
     
     # 提取思考过程和优化后的问题
     # Extract thought process and optimized question
@@ -140,33 +140,33 @@ async def atom(question: str, contexts: str=None, direct_result=None, decompose_
         return None, log
     log[index] = {}
     
-    # Get results from different approaches
-    direct_args = (question, contexts) if module == "multi-hop" else (question,)
-    direct_result = direct_result if direct_result else await direct(*direct_args)
+    # 从不同方法获得结果                                        
+    direct_args = (question, contexts) if module == "multi-hop" else (question,)     #direct_args始终是Tuple类型数据
+    direct_result = direct_result if direct_result else await direct(*direct_args)    #将direct_args里面储存的问题输入到直接解决分支中
     
     decompose_args = {"contexts": contexts} if module == "multi-hop" else {}
     decompose_result = decompose_result if decompose_result else await decompose(question, **decompose_args)
     
     # Set recursion depth
-    depth = depth if depth else min(ATOM_DEPTH, calculate_depth(decompose_result["sub-questions"]))
+    depth = depth if depth else min(ATOM_DEPTH, calculate_depth(decompose_result["sub-questions"]))  # 计算递归深度方法 取最小值
     
-    # Separate independent and dependent sub-questions
+    # 独立子问题和依赖问题
     independent_subqs = [sub_q for sub_q in decompose_result["sub-questions"] if len(sub_q["depend"]) == 0]
     dependent_subqs = [sub_q for sub_q in decompose_result["sub-questions"] if sub_q not in independent_subqs]
     
-    # Get contraction result
+    # Get contraction result  收缩 等于论文中的 "马尔可夫性质"   
     merging_args = {
         "question": question,
         "decompose_result": decompose_result,
         "independent_subqs": independent_subqs,
         "dependent_subqs": dependent_subqs
     }
-    if module == "multi-hop":
+    if module == "multi-hop":                                     #只有当 module 的值是 "multi-hop" 时，才会将 contexts 的值添加到 merging_args 字典中，并且键名是"contexts"
         merging_args["contexts"] = contexts
         
     contractd_thought, contractd_question, contraction_result = await merging(**merging_args)
     
-    # Update contraction result with additional information
+    # Update contraction result with additional information  更新问题
     contraction_result["contraction_thought"] = contractd_thought
     contraction_result["sub-questions"] = independent_subqs + [{
         "description": contractd_question,
