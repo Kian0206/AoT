@@ -76,11 +76,11 @@ class ExperimentRunner:
             from experiment.prompter.multihop import contexts
             # 处理question_key为列表的情况
             if isinstance(question_key, list):
-                formatted_questions = [self._format_question_from_keys(item, question_key) for item in testset]
-                tasks = [atom(question, contexts(item, self.dataset))                                            #提供与当前问题相关的背景知识。
-                         for question, item in zip(formatted_questions, testset)]
+                formatted_questions = [self._format_question_from_keys(item, question_key) for item in testset]              #将数据集中的问题提取出来                                                                                                   
+                tasks = [atom(question, contexts(item, self.dataset))                                            #提供与当前问题相关的背景知识。  
+                         for question, item in zip(formatted_questions, testset)]                    #在每次迭代中，元组被解包为 question 和 item 两个变量：question：来自 formatted_questions 列表的格式化后的问题字符串。item：来自 testset 列表的字典，包含问题的相关信息。
             else:
-                tasks = [atom(item[question_key], contexts(item, self.dataset)) for item in testset]
+                tasks = [atom(item[question_key], contexts(item, self.dataset)) for item in testset]     
         else:
             # 处理question_key为列表的情况
             if isinstance(question_key, list):
@@ -97,7 +97,7 @@ class ExperimentRunner:
         for key in keys:
             if key in item:
                 parts.append(f"{key}: {item[key]}")
-        return "\n".join(parts)
+        return "\n".join(parts)  
     
     def construct_entry(self, result: Tuple[Dict[str, Any], Any], data: Dict[str, Any]) -> Dict[str, Any]:    # 将模型响应、原始数据和评分结果组合成一个结构化的结果条目
         """构建结果条目"""

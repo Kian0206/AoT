@@ -44,7 +44,7 @@ def retry(func_name):
             global MAX_RETRIES
             retries = MAX_RETRIES      # 初始化重试次数
             while retries >= 0:
-                prompt = getattr(prompter, func_name)(*args, **kwargs)   # 获取prompt
+                prompt = getattr(prompter, func_name)(*args, **kwargs)   # 获取prompt  getattr 函数的作用是根据字符串名称获取对象的属性或方法。
                 
                 if module == "multi-hop" and func_name != "contract":
                     response = await gen(prompt, response_format="json_object")  # 获取LLM响应
@@ -114,7 +114,7 @@ async def merging(question: str, decompose_result: dict, independent_subqs: list
         if module == "multi-hop"
         else (question, decompose_result, independent_subqs, dependent_subqs)
     )
-    contractd_result = await contract(*contract_args)           # 合同步骤结果  主要遇到调用注释装饰器的方法都是与openai做交互的
+    contractd_result = await contract(*contract_args)           # 主要遇到调用注释装饰器的方法都是与openai做交互的 / contract 函数内部，会使用这些参数，生成prompt，并传递给LLM
     
     # 提取思考过程和优化后的问题
     # Extract thought process and optimized question
@@ -142,10 +142,10 @@ async def atom(question: str, contexts: str=None, direct_result=None, decompose_
     
     # 从不同方法获得结果                                        
     direct_args = (question, contexts) if module == "multi-hop" else (question,)     #direct_args始终是Tuple类型数据
-    direct_result = direct_result if direct_result else await direct(*direct_args)    #将direct_args里面储存的问题输入到直接解决分支中
+    direct_result = direct_result if direct_result else await direct(*direct_args)    #将direct_args里面储存的问题输入到直接解决分支中,相当于直接把问题给GPT生成结果
     
     decompose_args = {"contexts": contexts} if module == "multi-hop" else {}
-    decompose_result = decompose_result if decompose_result else await decompose(question, **decompose_args)
+    decompose_result = decompose_result if decompose_result else await decompose(question, **decompose_args)           #将 question 作为位置参数，decompose_args 字典作为关键字参数传递给它。
     
     # Set recursion depth
     depth = depth if depth else min(ATOM_DEPTH, calculate_depth(decompose_result["sub-questions"]))  # 计算递归深度方法 取最小值
@@ -175,9 +175,9 @@ async def atom(question: str, contexts: str=None, direct_result=None, decompose_
         "depend": []
     }]
     
-    # Get ensemble result
+    # Get ensemble result     获取集成结果
     ensemble_args = [question]
-    ensemble_args.append([direct_result["response"], decompose_result["response"], contraction_result["response"]])
+    ensemble_args.append([direct_result["response"], decompose_result["response"], contraction_result["response"]])   #三种回答方式都添加到列表中
     if module == "multi-hop":
         ensemble_args.append(contexts)
     
@@ -294,8 +294,8 @@ async def plugin(question: str, contexts: str=None, sample_num: int=3):
 
 @retry("direct")
 async def direct(question: str, contexts: str=None):
-    if isinstance(question, (list, tuple)):
-        question = ''.join(map(str, question))
+    if isinstance(question, (list, tuple)): 
+        question = ''.join(map(str, question))           #对question做了类型判断，如果question是list或者tuple，那么会将其转换为字符串。
     pass
 
 @retry("multistep")                                     
