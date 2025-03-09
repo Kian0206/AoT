@@ -175,8 +175,10 @@ class ExperimentRunner:
         # 打印结果摘要
         print(f"Unsolved: {round((1-accuracy) * len(json_obj))}")
         print(f"Accuracy: {accuracy:.4f}")
-        print(f"Time taken: {duration_formatter(time.time() - self.timestamp)}")
-        
+        print(f"Time taken: {duration_formatter(time.time() - self.timestamp)}")    
+        # 一次性计算： 准确率是在处理完 testset 中的所有问题后，一次性计算出来的。
+        # 整体准确率： 计算的是整个指定范围内数据集的整体准确率，而不是每个问题的准确率。
+        # 单次输出： 结果摘要（包括准确率）只在 run 方法结束时打印一次。
         return accuracy
 
 
